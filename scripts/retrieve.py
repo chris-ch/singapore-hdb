@@ -78,33 +78,36 @@ def generate_rooms_db():
     def process_building(room_id):
         room_id_formatted = '{:05}'.format(room_id)
         logging.info('processing building %s' % room_id_formatted)
-        with open('../data/rooms-db.csv', 'w') as rooms_file:
-            field_names = ['building', 'number', 'street', 'postal_code']
-            writer = csv.DictWriter(rooms_file, fieldnames=field_names)
-            writer.writeheader()
-            prop_info = load_prop_info(room_id_formatted)
-            if prop_info:
-                number, street, postal_code = prop_info
-                line = ','.join([room_id_formatted] + ['"%s"' % field for field in prop_info])
-                rooms_file.write(line + os.linesep)
+        prop_info = load_prop_info(room_id_formatted)
+        if not prop_info:
+            logging.info('no data found for building %s' % room_id_formatted)
+            return None
 
-                writer.writerow({
-                        'building':room_id_formatted,
-                        'number': number,
-                        'street': street,
-                        'postal_code': postal_code,
-                })
-
-            else:
-                logging.info('no data found for building %s' % room_id_formatted)
+        return [room_id_formatted] + list(prop_info)
 
     mapper = TaskPool(pool_size=40)
     for count in xrange(1, 15288):
         mapper.add_task(process_building, count)
 
     logging.info('processing...')
-    mapper.execute()
+    results = mapper.execute()
     logging.info('completed')
+
+    with open('../data/rooms-db.csv', 'w') as rooms_file:
+        field_names = ['building', 'number', 'street', 'postal_code']
+        writer = csv.DictWriter(rooms_file, fieldnames=field_names)
+        writer.writeheader()
+        for result in results:
+            if result is None:
+                continue
+
+            building, number, street, postal_code = result
+            writer.writerow({
+                'building': building,
+                'number': number,
+                'street': street,
+                'postal_code': postal_code,
+            })
 
 
 def generate_units_db():
@@ -191,6 +194,6 @@ if __name__ == '__main__':
     logging.info('generating buildings data')
     generate_rooms_db()
     logging.info('generating leases data')
-    generate_leases_db()
+    #generate_leases_db()
     logging.info('generating units data')
-    generate_units_db()
+    #generate_units_db()
