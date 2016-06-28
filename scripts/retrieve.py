@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from retrying import retry
 
 from taskpool import TaskPool
-from urlcaching import set_cache_file, open_url
+from urlcaching import open_url, set_cache_http
 
 _HDB_URL = 'https://services2.hdb.gov.sg'
 
@@ -75,19 +75,19 @@ def load_lease_data(postal_code):
 def generate_rooms_db():
 
     @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_delay=30000)
-    def process_building(count):
-        flat_id = '{:05}'.format(count)
-        logging.info('processing building %s' % flat_id)
-        with open('../data/rooms-db.csv', 'a') as flats_db:
-            prop_info = load_prop_info(flat_id)
+    def process_building(room_id):
+        room_id_formatted = '{:05}'.format(room_id)
+        logging.info('processing building %s' % room_id_formatted)
+        with open('../data/rooms-db.csv', 'a') as rooms_db:
+            prop_info = load_prop_info(room_id_formatted)
             if prop_info:
-                line = ','.join([flat_id] + ['"%s"' % field for field in prop_info])
-                flats_db.write(line + os.linesep)
+                line = ','.join([room_id_formatted] + ['"%s"' % field for field in prop_info])
+                rooms_db.write(line + os.linesep)
 
             else:
-                logging.info('no data found for building %s' % flat_id)
+                logging.info('no data found for building %s' % room_id_formatted)
 
-    mapper = TaskPool(pool_size=20)
+    mapper = TaskPool(pool_size=40)
     for count in xrange(1, 15288):
         mapper.add_task(process_building, count)
 
@@ -174,9 +174,12 @@ def main():
     export_df.to_csv('../data/rooms-final.csv', index=False, float_format='%.f')
 
 if __name__ == '__main__':
-    set_cache_file('../data/.urlcaching')
+    set_cache_http('../data/.urlcaching')
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
     logging.info('started')
+    logging.info('generating buildings data')
     generate_rooms_db()
+    logging.info('generating leases data')
     generate_leases_db()
+    logging.info('generating units data')
     generate_units_db()

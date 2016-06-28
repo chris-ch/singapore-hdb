@@ -8,5 +8,5 @@ setup(
     license='',
     author='christophe',
     author_email='',
-    description='', requires=['bs4']
+    description='', requires=['bs4', 'retrying', 'pandas', 'requests']
 )
