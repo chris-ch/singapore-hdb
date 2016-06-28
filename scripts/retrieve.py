@@ -78,11 +78,22 @@ def generate_rooms_db():
     def process_building(room_id):
         room_id_formatted = '{:05}'.format(room_id)
         logging.info('processing building %s' % room_id_formatted)
-        with open('../data/rooms-db.csv', 'a') as rooms_db:
+        with open('../data/rooms-db.csv', 'w') as rooms_file:
+            field_names = ['building', 'number', 'street', 'postal_code']
+            writer = csv.DictWriter(rooms_file, fieldnames=field_names)
+            writer.writeheader()
             prop_info = load_prop_info(room_id_formatted)
             if prop_info:
+                number, street, postal_code = prop_info
                 line = ','.join([room_id_formatted] + ['"%s"' % field for field in prop_info])
-                rooms_db.write(line + os.linesep)
+                rooms_file.write(line + os.linesep)
+
+                writer.writerow({
+                        'building':room_id_formatted,
+                        'number': number,
+                        'street': street,
+                        'postal_code': postal_code,
+                })
 
             else:
                 logging.info('no data found for building %s' % room_id_formatted)
@@ -104,7 +115,7 @@ def generate_units_db():
         field_names = ['postal_code', 'room_type', 'room_count']
         writer = csv.DictWriter(units_file, fieldnames=field_names)
         writer.writeheader()
-        mapper = TaskPool(pool_size=20)
+        mapper = TaskPool(pool_size=40)
         for postal_code in sorted(postal_codes):
             logging.info('queuing postal code: %s' % postal_code)
             mapper.add_task(load_residential_units, postal_code)
@@ -131,7 +142,7 @@ def generate_leases_db():
         field_names = ['postal_code', 'lease_commenced', 'lease_remaining', 'lease_period']
         writer = csv.DictWriter(lease_file, fieldnames=field_names)
         writer.writeheader()
-        mapper = TaskPool(pool_size=20)
+        mapper = TaskPool(pool_size=40)
         for postal_code in sorted(postal_codes):
             logging.info('queuing postal code: %s' % postal_code)
             mapper.add_task(load_lease_data, postal_code)
