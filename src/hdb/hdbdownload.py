@@ -55,7 +55,7 @@ def load_residential_units(postal_code):
     xml_text = open_url(url % postal_code)
     xml = BeautifulSoup(xml_text, 'xml')
     unit_data = list()
-    logging.info('processing postal code %s' % postal_code)
+    logging.info('processing units data for postal code %s' % postal_code)
     for unit in xml.find_all('ResidentUnit'):
         room_type = ''
         room_count = 0
@@ -75,7 +75,7 @@ def load_lease_data(postal_code):
     url = _HDB_URL + '/webapp/BB14ALeaseInfo/BB14SGenerateLeaseInfoXML?postalCode=%s'
     xml_text = open_url(url % postal_code)
     xml = BeautifulSoup(xml_text, 'xml')
-    logging.info('processing postal code %s' % postal_code)
+    logging.info('processing lease data for postal code %s' % postal_code)
     lease_info = xml.find('LeaseInformation')
 
     lease_commenced = ''
