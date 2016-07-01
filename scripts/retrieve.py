@@ -1,6 +1,5 @@
 import csv
 import logging
-import os
 
 import pandas
 from bs4 import BeautifulSoup
@@ -75,15 +74,15 @@ def load_lease_data(postal_code):
 def generate_rooms_db():
 
     @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_delay=30000)
-    def process_building(room_id):
-        room_id_formatted = '{:05}'.format(room_id)
-        logging.info('processing building %s' % room_id_formatted)
-        prop_info = load_prop_info(room_id_formatted)
+    def process_building(building_id):
+        building_id_formatted = '{:05}'.format(building_id)
+        logging.info('processing building %s' % building_id_formatted)
+        prop_info = load_prop_info(building_id_formatted)
         if not prop_info:
-            logging.info('no data found for building %s' % room_id_formatted)
+            logging.info('no data found for building %s' % building_id_formatted)
             return None
 
-        return [room_id_formatted] + list(prop_info)
+        return [building_id_formatted] + list(prop_info)
 
     mapper = TaskPool(pool_size=40)
     for count in xrange(1, 15288):
@@ -93,7 +92,7 @@ def generate_rooms_db():
     results = mapper.execute()
     logging.info('completed')
 
-    with open('../data/rooms-db.csv', 'w') as rooms_file:
+    with open('../data/buildings-db.csv', 'w') as rooms_file:
         field_names = ['building', 'number', 'street', 'postal_code']
         writer = csv.DictWriter(rooms_file, fieldnames=field_names)
         writer.writeheader()
@@ -112,7 +111,7 @@ def generate_rooms_db():
 
 def generate_units_db():
     col_types = {'number': str, 'street': str, 'postal_code': str}
-    buildings_df = pandas.read_csv('../data/rooms-db.csv', engine='c', dtype=col_types)
+    buildings_df = pandas.read_csv('../data/buildings-db.csv', engine='c', dtype=col_types)
     postal_codes = buildings_df['postal_code'].unique()
     with open('../data/units-db.csv', 'w') as units_file:
         field_names = ['postal_code', 'room_type', 'room_count']
@@ -139,7 +138,7 @@ def generate_units_db():
 
 def generate_leases_db():
     col_types = {'number': str, 'street': str, 'postal_code': str}
-    buildings_df = pandas.read_csv('../data/rooms-db.csv', engine='c', dtype=col_types)
+    buildings_df = pandas.read_csv('../data/buildings-db.csv', engine='c', dtype=col_types)
     postal_codes = buildings_df['postal_code'].unique()
     with open('../data/leases-db.csv', 'w') as lease_file:
         field_names = ['postal_code', 'lease_commenced', 'lease_remaining', 'lease_period']
@@ -165,12 +164,12 @@ def generate_leases_db():
 
 
 def main():
-    rooms_df = pandas.read_csv('../data/rooms-db.csv')
+    buildings_df = pandas.read_csv('../data/buildings-db.csv')
     leases_df = pandas.read_csv('../data/leases-db.csv')
     units_df = pandas.read_csv('../data/units-db.csv')
     units_pivot_df = units_df.pivot(index='postal_code', columns='room_type', values='room_count')
-    rooms_enhanced_df = rooms_df.join(units_pivot_df, on='postal_code')
-    final_df = rooms_enhanced_df.join(leases_df.set_index('postal_code', inplace=False), on='postal_code')
+    buildings_enhanced_df = buildings_df.join(units_pivot_df, on='postal_code')
+    final_df = buildings_enhanced_df.join(leases_df.set_index('postal_code', inplace=False), on='postal_code')
 
     def make_address(row):
         return '{number} {street}'.format(number=row['number'], street=row['street'])
