@@ -1,7 +1,7 @@
 import argparse
 import logging
 
-from hdb.hdbdownload import generate_rooms_db, generate_units_db, generate_leases_db, set_data_dir, set_hdb_url, \
+from hdb.hdbdownload import generate_buildings_db, generate_units_db, generate_leases_db, set_data_dir, set_hdb_url, \
     set_pool_size, generate_csv
 from hdb.urlcaching import set_cache_http
 
@@ -26,7 +26,7 @@ def main():
 
     logging.info('started')
     logging.info('generating buildings data')
-    generate_rooms_db()
+    generate_buildings_db()
     logging.info('generating leases data')
     generate_leases_db()
     logging.info('generating units data')

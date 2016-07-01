@@ -93,12 +93,12 @@ def load_lease_data(postal_code):
     return postal_code, lease_commenced, lease_remaining, lease_period
 
 
-def generate_rooms_db():
+def generate_buildings_db():
 
     @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_delay=30000)
     def process_building(building_id):
         building_id_formatted = '{:05}'.format(building_id)
-        logging.info('processing building %s' % building_id_formatted)
+        logging.info('processing data for building %s' % building_id_formatted)
         prop_info = load_prop_info(building_id_formatted)
         if not prop_info:
             logging.info('no data found for building %s' % building_id_formatted)
