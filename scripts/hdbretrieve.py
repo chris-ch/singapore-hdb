@@ -8,12 +8,14 @@ from hdb.urlcaching import set_cache_http
 
 def main():
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
-    parser = argparse.ArgumentParser(description='Loading building data from HDB.')
+    parser = argparse.ArgumentParser(description='Loading building data from HDB.',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter
+                                     )
     parser.add_argument('output_file', type=str, nargs='?', help='name of the output CSV file', default='output.csv')
     args = parser.parse_args()
     DATA_DIR = '.hdb/'
     HDB_URL = 'https://services2.hdb.gov.sg'
-    POOL_SIZE = 60
+    POOL_SIZE = 40
     set_data_dir(DATA_DIR)
     set_hdb_url(HDB_URL)
     set_pool_size(POOL_SIZE)
