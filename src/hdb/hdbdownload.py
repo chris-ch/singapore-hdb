@@ -39,7 +39,7 @@ def load_prop_info(prop_id):
     xml_text = open_url(prop_info_url % prop_id)
     xml = BeautifulSoup(xml_text, 'xml')
     block_tag = xml.find('Block')
-    if not block_tag.contents:
+    if not block_tag or not block_tag.contents:
         return None
 
     block = block_tag.contents[0].strip()
