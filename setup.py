@@ -11,5 +11,7 @@ setup(
     author='Christophe Alexandre',
     author_email='ch.alexandre@bluewin.ch',
     description='Loading building data from HDB',
-    install_requires=['lxml>=3.6.0', 'beautifulsoup4>=4.4.1', 'retrying>=1.3.3', 'pandas>=0.18.1', 'requests>=2.10.0', 'requests_cache>=0.4.12']
+    install_requires=['lxml>=3.6.0', 'beautifulsoup4>=4.4.1', 'retrying>=1.3.3',
+                      'pandas>=0.18.1', 'requests>=2.10.0', 'requests_cache>=0.4.12'],
+    dependency_links=['https://github.com/chris-ch/requests-cache.git']
 )
