@@ -11,5 +11,5 @@ setup(
     author='Christophe Alexandre',
     author_email='ch.alexandre@bluewin.ch',
     description='Loading building data from HDB',
-    requires=['bs4', 'retrying', 'pandas', 'requests', 'requests_cache']
+    install_requires=['bs4', 'retrying', 'pandas', 'requests', 'requests_cache']
 )
