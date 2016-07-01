@@ -207,3 +207,5 @@ def generate_csv(data_dir, output_dir, output_file):
         ]
     export_df = final_df[columns].sort_values(by='Postal Code')
     export_df.to_csv(output_dir + output_file, index=False, float_format='%.f')
+    full_path = os.path.abspath(output_dir + output_file)
+    logging.info('file saved under %s', full_path)
