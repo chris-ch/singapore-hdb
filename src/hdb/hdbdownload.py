@@ -1,5 +1,6 @@
 import csv
 import logging
+import os
 
 import pandas
 from bs4 import BeautifulSoup
@@ -26,6 +27,9 @@ def set_hdb_url(hdb_url):
 
 def set_data_dir(data_dir):
     global _DATA_DIR
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+
     _DATA_DIR = data_dir
 
 
