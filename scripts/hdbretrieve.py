@@ -4,9 +4,9 @@ import logging
 import pandas
 from bs4 import BeautifulSoup
 from retrying import retry
-
 from taskpool import TaskPool
-from urlcaching import open_url, set_cache_http
+
+from hdb.urlcaching import open_url, set_cache_http
 
 _HDB_URL = 'https://services2.hdb.gov.sg'
 

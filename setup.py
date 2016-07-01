@@ -1,12 +1,15 @@
 from distutils.core import setup
 
 setup(
-    name='webscraping',
+    name='singapore-hdb',
     version='0.1',
-    packages=[''],
+    packages=['hdb'],
+    package_dir={'hdb': 'src/hdb'},
+    scripts=['scripts/hdbretrieve.py'],
     url='',
     license='',
-    author='christophe',
-    author_email='',
-    description='', requires=['bs4', 'retrying', 'pandas', 'requests', 'requests_cache']
+    author='Christophe Alexandre',
+    author_email='ch.alexandre@bluewin.ch',
+    description='Loading building data from HDB',
+    requires=['bs4', 'retrying', 'pandas', 'requests', 'requests_cache']
 )
