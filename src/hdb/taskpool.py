@@ -5,6 +5,7 @@ from multiprocessing.pool import ThreadPool
 class TaskPool(object):
 
     def __init__(self, pool_size=5):
+        self._pool_size = pool_size
         self._pool = ThreadPool(pool_size)
         self._tasks_args = list()
 
@@ -25,8 +26,16 @@ class TaskPool(object):
         self._tasks_args.append((task_function, task_id, args, kwargs))
 
     def execute(self):
-        logging.info('processing %d tasks', len(self._tasks_args))
-        results = self._pool.map(TaskPool._task_function_wrapper, self._tasks_args)
+        logging.debug('processing %d tasks', len(self._tasks_args))
+        if self._pool_size == 1:
+            results = list()
+            for task_args in self._tasks_args:
+                result = TaskPool._task_function_wrapper(task_args)
+                results.append(result)
+
+        else:
+            results = self._pool.map(TaskPool._task_function_wrapper, self._tasks_args)
+
         self._pool.close()
         self._pool.join()
 
