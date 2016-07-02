@@ -1,7 +1,0 @@
-lxml>=3.6.0
-beautifulsoup4>=4.4.1
-retrying>=1.3.3
-pandas>=0.18.1
-requests>=2.10.0
--e git+https://github.com/chris-ch/requests-cache-threadsafe.git#egg=requests-cache-threadsafe
-
