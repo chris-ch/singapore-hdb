@@ -12,7 +12,6 @@ from hdb.urlcaching import open_url
 _HDB_URL = 'https://services2.hdb.gov.sg'
 _DATA_DIR = '.hdb/'
 _POOL_SIZE = 10
-_MAX_BUILDING_ID=15288
 
 
 def set_pool_size(pool_size):
@@ -93,7 +92,7 @@ def load_lease_data(postal_code):
     return postal_code, lease_commenced, lease_remaining, lease_period
 
 
-def generate_buildings_db():
+def generate_buildings_db(max_building_id):
 
     @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_delay=30000)
     def process_building(building_id):
@@ -107,7 +106,7 @@ def generate_buildings_db():
         return [building_id_formatted] + list(prop_info)
 
     mapper = TaskPool(pool_size=_POOL_SIZE)
-    for count in xrange(1, _MAX_BUILDING_ID):
+    for count in range(1, max_building_id):
         mapper.add_task(process_building, count)
 
     logging.info('processing...')
