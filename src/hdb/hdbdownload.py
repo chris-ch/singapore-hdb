@@ -184,7 +184,7 @@ def generate_leases_db():
         lease_file.close()
 
 
-def generate_csv(data_dir, output_dir, output_file):
+def generate_excel(data_dir, output_dir, output_file):
     buildings_df = pandas.read_csv(data_dir + 'buildings-db.csv')
     leases_df = pandas.read_csv(data_dir + 'leases-db.csv')
     units_df = pandas.read_csv(data_dir + 'units-db.csv')
@@ -205,6 +205,8 @@ def generate_csv(data_dir, output_dir, output_file):
         'Multi-generation', 'Studio Apartment', 'Type S1', 'Type S2',
         ]
     export_df = final_df[columns].sort_values(by='Postal Code')
-    export_df.to_csv(output_dir + output_file, index=False, float_format='%.f')
     full_path = os.path.abspath(output_dir + output_file)
+    writer = pandas.ExcelWriter(full_path, engine='xlsxwriter')
+    export_df.to_excel(writer, index=False)
+    writer.save()
     logging.info('file saved under %s', full_path)

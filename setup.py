@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-import py2exe
 import os
 
 
@@ -18,8 +17,6 @@ setup(
     author_email='ch.alexandre@bluewin.ch',
     description='Extracting building data from HDB website',
     long_description=read('README.md'),
-    # for py2exe
-    console=['scripts/hdbretrieve.py'],
     entry_points={
         'console_scripts': [
             'hdbretrieve = hdb:main',
@@ -31,5 +28,6 @@ setup(
         'pandas>=0.18.1',
         'requests>=2.10.0',
         'lxml>=3.6.0',
+        'xlsxwriter>=0.9.2',
     ],
 )
