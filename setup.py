@@ -1,14 +1,21 @@
+import re
 from setuptools import setup, find_packages
 import os
 
-__version__ = '0.1'
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
 def get_version():
-    return __version__
+    with open(os.path.sep.join(['src', 'hdb', '__init__.py']), 'r') as fd:
+        version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
+                            fd.read(), re.MULTILINE).group(1)
+
+    if not version:
+        raise RuntimeError('Cannot find version information')
+
+    return version
 
 setup(
     name='singapore-hdb',

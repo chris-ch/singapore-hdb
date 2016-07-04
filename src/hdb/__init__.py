@@ -1,6 +1,8 @@
 import argparse
 import logging
 
+__version__ = '0.1'
+
 from hdb.hdbdownload import generate_buildings_db, generate_units_db, generate_leases_db, set_data_dir, set_hdb_url, \
     set_pool_size, generate_excel
 from hdb.urlcaching import set_cache_http
@@ -20,7 +22,7 @@ def main():
     parser.add_argument('--ntasks', type=int, help='number of simultaneous downloads', default=40)
     parser.add_argument('--use-cache', help='stores downloaded HDB files locally', action='store_true')
     parser.add_argument('--only-output', help='skips downloading steps (will fail if missing cache files)', action='store_true')
-    parser.add_argument('--max-building-id', help='max building id to scan', default=15288)
+    parser.add_argument('--max-building-id', type=int, help='max building id to scan', default=15288)
     args = parser.parse_args()
     DATA_DIR = '.hdb/'
     HDB_URL = 'https://services2.hdb.gov.sg'
