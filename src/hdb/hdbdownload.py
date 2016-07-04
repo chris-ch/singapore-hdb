@@ -2,6 +2,7 @@ import csv
 import logging
 import os
 
+import numpy
 import pandas
 from bs4 import BeautifulSoup
 from retrying import retry
@@ -197,13 +198,23 @@ def generate_excel(data_dir, output_dir, output_file):
 
     final_df['Short Address'] = final_df.apply(make_address, axis=1)
     final_df['Postal Code'] = final_df['postal_code']
-    final_df['Lease Year'] = final_df['lease_commenced']
+    final_df['Lease Date'] = final_df['lease_commenced']
+
+    def extract_year(row):
+        if not pandas.isnull(row['lease_commenced']):
+            return row['lease_commenced'][-4:]
+
+        else:
+            return numpy.nan
+
+    final_df['Lease Year'] = final_df.apply(extract_year, axis=1)
     final_df['Lease Duration'] = final_df['lease_period']
     # re-ordering
-    columns = ['Short Address', 'Postal Code', 'Lease Year', 'Lease Duration', '1-room', '2-room',
-        '3-room', '4-room', '5-room', 'Executive', 'HUDC',
-        'Multi-generation', 'Studio Apartment', 'Type S1', 'Type S2',
-        ]
+    columns = ['Short Address', 'Postal Code',
+               'Lease Date', 'Lease Year', 'Lease Duration',
+               '1-room', '2-room', '3-room', '4-room', '5-room',
+               'Executive', 'HUDC', 'Multi-generation', 'Studio Apartment', 'Type S1', 'Type S2',
+    ]
     export_df = final_df[columns].sort_values(by='Postal Code')
     full_path = os.path.abspath(output_dir + output_file)
     writer = pandas.ExcelWriter(full_path, engine='xlsxwriter')
