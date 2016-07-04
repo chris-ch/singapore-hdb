@@ -1,8 +1,6 @@
 import argparse
 import logging
 
-__version__ = '0.2'
-
 from hdb.hdbdownload import generate_buildings_db, generate_units_db, generate_leases_db, set_data_dir, set_hdb_url, \
     set_pool_size, generate_excel
 from hdb.urlcaching import set_cache_http
@@ -11,7 +9,6 @@ from hdb.urlcaching import set_cache_http
 def main():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
     logging.getLogger('requests').setLevel(logging.WARNING)
-    logging.info('version %s', __version__)
     parser = argparse.ArgumentParser(description='Loading building data from HDB.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter
                                      )

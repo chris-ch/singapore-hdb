@@ -1,13 +1,18 @@
 from setuptools import setup, find_packages
 import os
-from hdb import __version__
+
+__version__ = '0.1'
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+
+def get_version():
+    return __version__
+
 setup(
     name='singapore-hdb',
-    version=__version__,
+    version=get_version(),
     packages=find_packages('src'),
     package_dir={'': 'src'},   # for distutils
     scripts=['scripts/hdbretrieve.py'],
