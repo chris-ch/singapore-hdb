@@ -9,6 +9,10 @@ from hdb.urlcaching import set_cache_http
 def main():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
     logging.getLogger('requests').setLevel(logging.WARNING)
+    file_handler = logging.FileHandler('hdb.log', mode='w')
+    formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s:%(message)s')
+    file_handler.setFormatter(formatter)
+    logging.getLogger().addHandler(file_handler)
     parser = argparse.ArgumentParser(description='Loading building data from HDB.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter
                                      )
