@@ -1,7 +1,7 @@
 import argparse
 import logging
 
-__version__ = '0.1'
+__version__ = '0.2'
 
 from hdb.hdbdownload import generate_buildings_db, generate_units_db, generate_leases_db, set_data_dir, set_hdb_url, \
     set_pool_size, generate_excel

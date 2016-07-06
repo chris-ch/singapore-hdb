@@ -92,5 +92,5 @@ ENV/
 data/*.*
 .DS_Store
 *.pyc
-.urlcaching
+scripts/.urlcaching.sqlite
 .hdb
