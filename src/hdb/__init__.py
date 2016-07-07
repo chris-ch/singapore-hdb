@@ -32,7 +32,7 @@ def main():
         set_hdb_url(HDB_URL)
         set_pool_size(args.ntasks)
         if args.use_cache:
-            set_cache_http('.urlcaching')
+            set_cache_http('~/.urlcaching')
 
         logging.info('started')
         logging.info('generating buildings data')

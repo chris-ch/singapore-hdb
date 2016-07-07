@@ -1,4 +1,4 @@
-from hdb import main
+import hdb
 
 if __name__ == '__main__':
-    main()
+    hdb.main()

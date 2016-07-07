@@ -2,6 +2,7 @@ import csv
 import logging
 import os
 
+import itertools
 import numpy
 import pandas
 from bs4 import BeautifulSoup
@@ -91,6 +92,29 @@ def load_lease_data(postal_code):
         lease_period = lease_info.find_next('LeasePeriod').contents[0].strip()
 
     return postal_code, lease_commenced, lease_remaining, lease_period
+
+
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_delay=30000)
+def load_ethnic_data(postal_code):
+    logging.info('processing lease data for postal code %s' % postal_code)
+    webapp = """/webapp/BB29ETHN/BB29SEthnicMap?block=10R&"""
+    enquiry_codes = {'B': 'Buyer', 'S': 'Seller'}
+    list_ethnic_codes = {'C': 'Chinese', 'M': 'Malay', 'I': 'Indian/Other'}
+    list_citizenships = {'SC': 'Singapore Citizen', 'NSPR': 'Non-Malaysian'}
+    query = """enquiry=%(enquiry)s&postal=%(postal_code)s&ethnic=%(ethnic_code)s&citizenship=%(citizenship_code)s"""
+
+    for enquiry, ethnic_code, citizenship_code in itertools.product(enquiry_codes, list_ethnic_codes, list_citizenships):
+        url = _HDB_URL + webapp + query % {
+            'enquiry': enquiry,
+            'ethnic_code': ethnic_code,
+            'citizenship_code': citizenship_code,
+            'postal_code': postal_code,
+        }
+        xml_text = open_url(url)
+        xml = BeautifulSoup(xml_text, 'xml')
+        seller_results_tag = xml.find('sellerResults')
+        print(url)
+        print(xml_text)
 
 
 def generate_buildings_db(max_building_id):
