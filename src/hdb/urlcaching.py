@@ -23,19 +23,19 @@ def is_cache_used():
     return _CACHE_FILE_PATH is not None
 
 
-def get_directories_under(path):
+def _get_directories_under(path):
     return (node for node in os.listdir(path) if os.path.isdir(os.path.join(path, node)))
 
 
-def get_files_under(path):
+def _get_files_under(path):
     return (node for node in os.listdir(path) if os.path.isfile(os.path.join(path, node)))
 
 
-def generator_count(a_generator):
+def _generator_count(a_generator):
     return sum(1 for item in a_generator)
 
 
-def divide_node(path, nodes_path):
+def _divide_node(path, nodes_path):
     level = len(nodes_path)
     new_node_sup_init = 'FF' * 20
     new_node_inf_init = '7F' + 'FF' * 19
@@ -50,10 +50,6 @@ def divide_node(path, nodes_path):
 
     new_path_1 = os.path.sep.join([path] + nodes_path + [new_node_inf.lower()])
     new_path_2 = os.path.sep.join([path] + nodes_path + [new_node_sup.lower()])
-    result = (
-        (os.path.abspath(new_path_1), nodes_path + [new_node_inf]),
-        (os.path.abspath(new_path_2), nodes_path + [new_node_sup])
-    )
     return os.path.abspath(new_path_1), os.path.abspath(new_path_2)
 
 
@@ -62,10 +58,10 @@ def rebalance_cache_tree(path, nodes_path=None):
         nodes_path = list()
 
     current_path = os.path.sep.join([path] + nodes_path)
-    files_node = get_files_under(current_path)
-    rebalancing_required = generator_count(itertools.islice(files_node, _MAX_NODE_FILES + 1)) > _MAX_NODE_FILES
+    files_node = _get_files_under(current_path)
+    rebalancing_required = _generator_count(itertools.islice(files_node, _MAX_NODE_FILES + 1)) > _MAX_NODE_FILES
     if rebalancing_required:
-        new_path_1, new_path_2 = divide_node(path, nodes_path)
+        new_path_1, new_path_2 = _divide_node(path, nodes_path)
         logging.info('rebalancing required, creating node: %s', os.path.abspath(new_path_1))
         logging.info('rebalancing required, creating node: %s', os.path.abspath(new_path_2))
         if not os.path.exists(new_path_1):
@@ -74,7 +70,7 @@ def rebalance_cache_tree(path, nodes_path=None):
         if not os.path.exists(new_path_2):
             os.makedirs(new_path_2)
 
-        for filename in get_files_under(current_path):
+        for filename in _get_files_under(current_path):
             file_path = os.path.sep.join([current_path, filename])
             if file_path <= new_path_1:
                 logging.info('moving %s to %s', filename, new_path_1)
@@ -84,7 +80,7 @@ def rebalance_cache_tree(path, nodes_path=None):
                 logging.info('moving %s to %s', filename, new_path_2)
                 os.rename(file_path, os.path.sep.join([new_path_2, filename]))
 
-    for directory in get_directories_under(current_path):
+    for directory in _get_directories_under(current_path):
         rebalance_cache_tree(path, nodes_path + [directory])
 
 
@@ -92,7 +88,7 @@ def find_node(digest, path=None):
     if not path:
         path = _CACHE_FILE_PATH
 
-    directories = sorted(get_directories_under(path))
+    directories = sorted(_get_directories_under(path))
 
     if not directories:
         return path

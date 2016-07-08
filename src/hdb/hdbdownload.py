@@ -94,15 +94,25 @@ def load_lease_data(postal_code):
     return postal_code, lease_commenced, lease_remaining, lease_period
 
 
+def extract_tag_content(xml, tag_name):
+    tag = xml.find(tag_name)
+    if tag and tag.contents:
+        return tag.contents[0].strip()
+
+    else:
+        return ''
+
+
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_delay=30000)
 def load_ethnic_data(postal_code):
-    logging.info('processing lease data for postal code %s' % postal_code)
+    logging.info('processing ethnic data for postal code %s' % postal_code)
     webapp = """/webapp/BB29ETHN/BB29SEthnicMap?block=10R&"""
     enquiry_codes = {'B': 'Buyer', 'S': 'Seller'}
     list_ethnic_codes = {'C': 'Chinese', 'M': 'Malay', 'I': 'Indian/Other'}
     list_citizenships = {'SC': 'Singapore Citizen', 'NSPR': 'Non-Malaysian'}
     query = """enquiry=%(enquiry)s&postal=%(postal_code)s&ethnic=%(ethnic_code)s&citizenship=%(citizenship_code)s"""
 
+    results = list()
     for enquiry, ethnic_code, citizenship_code in itertools.product(enquiry_codes, list_ethnic_codes, list_citizenships):
         url = _HDB_URL + webapp + query % {
             'enquiry': enquiry,
@@ -112,9 +122,20 @@ def load_ethnic_data(postal_code):
         }
         xml_text = open_url(url)
         xml = BeautifulSoup(xml_text, 'xml')
-        seller_results_tag = xml.find('sellerResults')
-        print(url)
-        print(xml_text)
+        seller_results = extract_tag_content(xml, 'sellerResults')
+        buyer_results_comment = extract_tag_content(xml, 'buyerResultsTableHeading2')
+        buyer_results = extract_tag_content(xml, 'buyerResults')
+        result = {
+            'postal_code': postal_code,
+            'ethnic': list_ethnic_codes[ethnic_code],
+            'citizenship': list_citizenships[citizenship_code],
+            'seller': seller_results,
+            'buyer': buyer_results,
+            'buyer_results_comment': buyer_results_comment,
+        }
+        results.append(result)
+
+    return results
 
 
 def generate_buildings_db(max_building_id):
@@ -207,6 +228,35 @@ def generate_leases_db():
             })
 
         lease_file.close()
+
+
+def generate_ethnic_db():
+    col_types = {'number': str, 'street': str, 'postal_code': str}
+    buildings_df = pandas.read_csv(_DATA_DIR + 'buildings-db.csv', engine='c', dtype=col_types)
+    postal_codes = buildings_df['postal_code'].unique()
+
+    mapper = TaskPool(pool_size=_POOL_SIZE)
+    for postal_code in sorted(postal_codes):
+        logging.info('queuing postal code: %s' % postal_code)
+        mapper.add_task(load_ethnic_data, postal_code)
+
+    logging.info('processing...')
+    results = mapper.execute()
+
+    rows = list()
+    for postal_code_rows in results:
+        rows += postal_code_rows
+
+    result_df = pandas.DataFrame(rows)
+    buyers_df = result_df[result_df['seller'] == ''][[u'postal_code', u'citizenship', u'ethnic', u'buyer', u'buyer_results_comment']]
+    buyers_df.set_index([u'postal_code', u'citizenship', u'ethnic'], inplace=True)
+    sellers_df = result_df[result_df['buyer'] == ''][[u'postal_code', u'citizenship', u'ethnic', u'seller']]
+    sellers_df.set_index([u'postal_code', u'citizenship', u'ethnic'], inplace=True)
+    columns = [u'seller', u'buyer', u'buyer_results_comment']
+    merged_df = pandas.concat([buyers_df, sellers_df], axis=1)
+    merged_df = merged_df[columns]
+    writer = pandas.ExcelWriter('result.xlsx', engine='xlsxwriter')
+    merged_df.reset_index().to_excel(writer, index=False)
 
 
 def generate_excel(data_dir, output_dir, output_file):
