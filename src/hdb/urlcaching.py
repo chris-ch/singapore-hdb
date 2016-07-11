@@ -2,11 +2,18 @@ import logging
 import os
 
 import itertools
+import threading
+
+from datetime import datetime
 import requests
 import hashlib
 
 _CACHE_FILE_PATH = None
-_MAX_NODE_FILES = 1024
+_MAX_NODE_FILES = 0x400
+_REBALANCING_LIMIT = 0x1000
+
+
+_rebalancing = threading.Condition()
 
 
 def set_cache_http(cache_file_path):
@@ -41,7 +48,7 @@ def _divide_node(path, nodes_path):
     new_node_inf_init = '7F' + 'FF' * 19
     if level > 0:
         new_node_sup = nodes_path[-1]
-        new_node_diff = (int(new_node_sup_init, 16)- int(new_node_inf_init, 16)) >> level
+        new_node_diff = (int(new_node_sup_init, 16) - int(new_node_inf_init, 16)) >> level
         new_node_inf = '%0.40X' % (int(new_node_sup, 16) - new_node_diff)
 
     else:
@@ -62,8 +69,9 @@ def rebalance_cache_tree(path, nodes_path=None):
     rebalancing_required = _generator_count(itertools.islice(files_node, _MAX_NODE_FILES + 1)) > _MAX_NODE_FILES
     if rebalancing_required:
         new_path_1, new_path_2 = _divide_node(path, nodes_path)
-        logging.info('rebalancing required, creating node: %s', os.path.abspath(new_path_1))
-        logging.info('rebalancing required, creating node: %s', os.path.abspath(new_path_2))
+        logging.info('rebalancing required, creating nodes: %s and %s', os.path.abspath(new_path_1), os.path.abspath(new_path_2))
+        _rebalancing.acquire()
+        _rebalancing.wait()
         if not os.path.exists(new_path_1):
             os.makedirs(new_path_1)
 
@@ -79,6 +87,8 @@ def rebalance_cache_tree(path, nodes_path=None):
             else:
                 logging.info('moving %s to %s', filename, new_path_2)
                 os.rename(file_path, os.path.sep.join([new_path_2, filename]))
+
+        _rebalancing.release()
 
     for directory in _get_directories_under(current_path):
         rebalance_cache_tree(path, nodes_path + [directory])
@@ -120,16 +130,60 @@ def is_cached(key):
     return os.path.exists(cache_filename)
 
 
+def file_size(filename):
+    count = -1
+    with open(filename) as file_lines:
+        for count, line in enumerate(file_lines):
+            pass
+
+    return count + 1
+
+
+def _add_to_cache(key, value):
+    _rebalancing.acquire()
+    try:
+        logging.debug('adding to cache: %s', key)
+        filename = get_cache_filename(key)
+        index_name = os.path.sep.join([_CACHE_FILE_PATH, 'index'])
+        today = datetime.today().strftime('%Y%m%d')
+        with open(filename, 'w') as cache_content:
+            cache_content.write(value)
+
+        with open(index_name, 'a') as index_file:
+            filename_digest = filename.split(os.path.sep)[-1]
+            index_file.write('%s %s: "%s"\n' % (today, filename_digest, key))
+
+    finally:
+        _rebalancing.notify_all()
+        _rebalancing.release()
+
+    if file_size(index_name) % _REBALANCING_LIMIT == 0:
+        logging.debug('rebalancing cache')
+        rebalance_cache_tree(_CACHE_FILE_PATH)
+
+
+def _get_from_cache(key):
+    _rebalancing.acquire()
+    try:
+        logging.debug('reading from cache: %s', key)
+        with open(get_cache_filename(key), 'r') as cache_content:
+            content = cache_content.read()
+
+    finally:
+        _rebalancing.notify_all()
+        _rebalancing.release()
+
+    return content
+
+
 def open_url(url):
     logging.debug('opening url: %s', url)
     if is_cache_used():
         if not is_cached(url):
             content = requests.get(url).text
-            with open(get_cache_filename(url), 'w') as cache_content:
-                cache_content.write(content)
+            _add_to_cache(url, content)
 
-        with open(get_cache_filename(url) ,'r') as cache_content:
-            content = cache_content.read()
+        content = _get_from_cache(url)
 
     else:
         # straight access
